@@ -1,1 +1,4 @@
 /env
+/data
+.ENV
+.DS_Store
