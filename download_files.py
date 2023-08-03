@@ -30,21 +30,15 @@ def dl_parcel_uni(
 
 
 def dl_parcel_sales(file_loc="data/raw/tabular/parcel_sales.parquet"):
-    parcel_sales = pd.read_csv(
-        "/Users/divijsinha/Documents/assessor-comp/_box_data/Cook County 2023/Assessor__Archived_05-11-2022__-_Sales.csv"
+    parcel_sales = pd.read_json(
+        "https://datacatalog.cookcountyil.gov/resource/wvhk-k5uv.json?$limit=3000000"
     )
-    parcel_sales.loc[:, "PIN14"] = (
-        parcel_sales.PIN.str[0:2]
-        + parcel_sales.PIN.str[3:5]
-        + parcel_sales.PIN.str[6:9]
-        + parcel_sales.PIN.str[10:13]
-        + parcel_sales.PIN.str[14:18]
-    )
-    parcel_sales.loc[:, "recorded_date_dt"] = pd.to_datetime(
-        parcel_sales.loc[:, "Recorded date"],
-        format="%m/%d/%Y %I:%M:%S %p",
+    parcel_sales.loc[:, "sale_date_dt"] = pd.to_datetime(
+        parcel_sales.loc[:, "sale_date"],
+        format="%B %d, %Y",
         errors="coerce",
     )
+    parcel_sales.loc[:, "pin"] = parcel_sales.pin.astype("str")
     parcel_sales.to_parquet(file_loc)
 
 

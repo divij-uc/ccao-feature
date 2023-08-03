@@ -34,10 +34,8 @@ def map_township_to_cbg(township_list, cbg_df=il_cbg):
 
 def get_latest_parcel_sales(parcel_sales):
     latest_parcel_sales = (
-        parcel_sales.sort_values(
-            by=["PIN14", "recorded_date_dt"], ascending=[True, False]
-        )
-        .groupby("PIN14")
+        parcel_sales.sort_values(by=["pin", "sale_date_dt"], ascending=[True, False])
+        .groupby("pin")
         .first()
         .reset_index()
     )
@@ -49,9 +47,17 @@ def create_cbg_parcel_metrics(parcel_uni_sales):
         parcel_uni_sales.groupby("census_block_group_geoid")
         .agg(
             {
-                "recorded_date_dt": lambda x: x.isna().sum(),
+                "sale_date_dt": [
+                    lambda x: x.isna().sum(),
+                    lambda x: (x.dt.year > 2019).sum(),
+                ],
                 "pin": "count",
-                "Sale price": ["mean", "median", "std"],
+                "sale_price": [
+                    "mean",
+                    "median",
+                    "std",
+                    lambda x: np.power(10, np.mean(np.log10(x.dropna()))),
+                ],
                 "env_airport_noise_dnl": "mean",
                 "access_cmap_walk_nta_score": "mean",
                 "access_cmap_walk_total_score": "mean",
@@ -65,11 +71,13 @@ def create_cbg_parcel_metrics(parcel_uni_sales):
     new_cols = [
         "GEOID",
         "total sales",
+        "total sales post 2019",
         "total pins",
         "mean sales price",
         "median sales price",
         "std sales price",
-    ] + new_cols[6:]
+        "gmean sales price",
+    ] + new_cols[8:]
     cbg_parcel.columns = new_cols
     cbg_parcel.loc[:, "GEOID"] = cbg_parcel.GEOID.astype("str").str[:-2]
     cbg_parcel.loc[:, "ratio sales to pins"] = (
@@ -86,9 +94,7 @@ if __name__ == "__main__":
     ]
     cbg_township = map_township_to_cbg(cc_township_limited)
     latest_parcel_sales = get_latest_parcel_sales(parcel_sales)
-    parcel_uni_sales = pd.merge(
-        parcel_uni, latest_parcel_sales, how="left", left_on="pin", right_on="PIN14"
-    )
+    parcel_uni_sales = pd.merge(parcel_uni, latest_parcel_sales, how="left", on="pin")
     cbg_parcel = create_cbg_parcel_metrics(parcel_uni_sales)
     cbg_parcel_twn = pd.merge(cbg_township, cbg_parcel, "inner", "GEOID")
     cbg_parcel_twn.to_parquet("data/in_process/shapefiles/cbg_parcel_twn.parquet")
