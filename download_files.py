@@ -33,12 +33,8 @@ def dl_parcel_sales(file_loc="data/raw/tabular/parcel_sales.parquet"):
     parcel_sales = pd.read_json(
         "https://datacatalog.cookcountyil.gov/resource/wvhk-k5uv.json?$limit=3000000"
     )
-    parcel_sales.loc[:, "sale_date_dt"] = pd.to_datetime(
-        parcel_sales.loc[:, "sale_date"],
-        format="%B %d, %Y",
-        errors="coerce",
-    )
     parcel_sales.loc[:, "pin"] = parcel_sales.pin.astype("str")
+    parcel_sales.sale_date = pd.to_datetime(parcel_sales.sale_date)
     parcel_sales.to_parquet(file_loc)
 
 

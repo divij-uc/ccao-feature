@@ -34,7 +34,7 @@ def map_township_to_cbg(township_list, cbg_df=il_cbg):
 
 def get_latest_parcel_sales(parcel_sales):
     latest_parcel_sales = (
-        parcel_sales.sort_values(by=["pin", "sale_date_dt"], ascending=[True, False])
+        parcel_sales.sort_values(by=["pin", "sale_date"], ascending=[True, False])
         .groupby("pin")
         .first()
         .reset_index()
@@ -47,7 +47,7 @@ def create_cbg_parcel_metrics(parcel_uni_sales):
         parcel_uni_sales.groupby("census_block_group_geoid")
         .agg(
             {
-                "sale_date_dt": [
+                "sale_date": [
                     lambda x: x.isna().sum(),
                     lambda x: (x.dt.year > 2019).sum(),
                 ],
